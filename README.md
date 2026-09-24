@@ -22,6 +22,98 @@ The main objective of this project was to gain practical experience with:
 * Terraform state management
 * Infrastructure lifecycle management
 
+## ☁️ Remote State Management
+
+The project also demonstrates managing Terraform state remotely using an **Amazon S3 bucket**.
+
+Instead of keeping the Terraform state file only on the local machine, the state is stored in an S3 bucket. This provides centralized state storage and allows the Terraform state to be managed separately from the local project files.
+
+### S3 Remote Backend
+
+Example backend configuration:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "YOUR-TERRAFORM-STATE-BUCKET"
+    key            = "terraform/state/terraform.tfstate"
+    region         = "ap-south-1"
+    encrypt        = true
+    dynamodb_table = "terraform-state-lock"
+  }
+}
+```
+
+### Remote State Architecture
+
+```text
+                Terraform
+                    |
+                    v
+            S3 Remote Backend
+                    |
+                    v
+          terraform.tfstate
+                    |
+                    v
+          DynamoDB State Lock
+```
+
+### Why Remote State?
+
+Remote state provides:
+
+* Centralized Terraform state storage
+* State persistence outside the local machine
+* Encryption of the state object
+* State locking to help prevent concurrent Terraform operations
+* Better collaboration and infrastructure management
+
+### State Locking with DynamoDB
+
+A DynamoDB table was configured for Terraform state locking.
+
+The purpose of state locking is to prevent multiple Terraform operations from modifying the same state simultaneously.
+
+Example:
+
+```text
+Terraform User 1
+       |
+       v
+  State Lock
+       |
+       X
+Terraform User 2
+```
+
+When the first Terraform operation releases the lock, another operation can proceed.
+
+### Backend Initialization
+
+After configuring the S3 backend, Terraform was initialized using:
+
+```bash
+terraform init
+```
+
+Terraform then configured the remote backend and used the S3 location for storing the state.
+
+### Security Considerations
+
+The following were kept out of GitHub:
+
+```text
+terraform.tfstate
+terraform.tfstate.backup
+AWS access keys
+AWS secret keys
+Terraform credentials
+```
+
+The `.gitignore` file was configured to prevent sensitive Terraform state and credentials from being committed accidentally.
+
+
 ---
 
 ## 🛠️ Technologies Used
